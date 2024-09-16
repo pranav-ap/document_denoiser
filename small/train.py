@@ -22,8 +22,8 @@ Configuration
 
 @dataclass
 class TrainingConfig:
-    train_batch_size = 64
-    val_batch_size = 64
+    train_batch_size = 8
+    val_batch_size = 8
 
     max_epochs = 10
     check_val_every_n_epoch = 2
@@ -66,7 +66,7 @@ class DocDenoiserDataset(torch.utils.data.Dataset):
         if self.transform:
             noisy_image = self.transform(noisy_image)
 
-        return noisy_image
+        return noisy_image.float()
 
     def __getitem__(self, index):
         if self.stage == 'test':
@@ -88,7 +88,7 @@ class DocDenoiserDataset(torch.utils.data.Dataset):
         if self.transform:
             clean_image = self.transform(clean_image)
 
-        return noisy_image, clean_image
+        return noisy_image.float(), clean_image.float()
 
 
 class DocDenoiserDataModule(L.LightningDataModule):
@@ -104,11 +104,12 @@ class DocDenoiserDataModule(L.LightningDataModule):
 
         self.transform = T.Compose([
             T.Resize((420, 540)),
-            T.Grayscale(num_output_channels=1),
+            # T.Grayscale(num_output_channels=1),
             # Convert image to tensor (scales pixel values to [0, 1])
             # T.ToTensor(),
+            T.ConvertImageDtype(torch.float),
             # Normalize to have mean 0.5 and std 0.5
-            # T.Normalize((0.5,), (0.5,)),
+            T.Normalize((0.5,), (0.5,)),
         ])
 
         self.train_dataset = None
