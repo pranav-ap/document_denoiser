@@ -1,0 +1,19 @@
+dirs:
+    data: D:/code/document_denoiser/data
+    output: D:/code/document_denoiser/output
+
+train:
+    train_batch_size: 2
+    val_batch_size: 2
+
+    max_epochs: 5
+    check_val_every_n_epoch: 4
+    num_sanity_val_steps: 1,
+    log_every_n_steps: 25
+    accumulate_grad_batches: 32
+    learning_rate: 1e-4
+
+test:
+    batch_size: 2
+
+
