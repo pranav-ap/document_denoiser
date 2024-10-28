@@ -1,4 +1,4 @@
-# conda install pytorch torchvision torchaudio pytorch-cuda=12.4 -c pytorch -c nvidia
+# conda install pytorch torchvision pytorch-cuda=12.4 -c pytorch -c nvidia
 
 jupyter
 jupyterlab
@@ -13,3 +13,4 @@ scikit-learn
 scikit-image
 opencv-python
 loguru
+kaggle
