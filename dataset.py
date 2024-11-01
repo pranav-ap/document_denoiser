@@ -13,17 +13,24 @@ torch.set_float32_matmul_precision('medium')
 
 class AugraphyDataset(torch.utils.data.Dataset):
     # noinspection PyTypeChecker
-    def __init__(self, root_dir, subset, transform=None):
+    def __init__(self, root_dir, subset, transform=None, sample_size=None):
         self.root_dir = root_dir
-        self.subset = subset  # train validate test
+        self.subset = subset
         self.transform = transform
 
-        self.shabby_dir: str = os.path.join(root_dir, subset, f'{subset}_shabby')
-        self.clean_dir: str = os.path.join(root_dir, subset, f'{subset}_cleaned')
+        self.shabby_dir = os.path.join(root_dir, subset, subset, f'{subset}_shabby')
+        self.clean_dir = os.path.join(root_dir, subset, subset, f'{subset}_cleaned')
 
         self.shabby_images = sorted(os.listdir(self.shabby_dir))
         self.clean_images = sorted(os.listdir(self.clean_dir))
 
+        if sample_size is not None:
+            sample_indices = random.sample(range(len(self.shabby_images)), min(sample_size, len(self.shabby_images)))
+            self.shabby_images = [self.shabby_images[i] for i in sample_indices]
+            self.clean_images = [self.clean_images[i] for i in sample_indices]
+
+        assert len(self.shabby_images) == len(self.clean_images), "Mismatch in number of shabby and clean images."
+        
     def __len__(self):
         return len(self.shabby_images)
 
@@ -47,8 +54,10 @@ class DocumentDataModule(L.LightningDataModule):
 
         self.num_workers = os.cpu_count()
 
+        w, h = config.image_size
+
         self.transform = T.Compose([
-            T.Resize((420, 540)),
+            T.Resize((w, h)),
             T.Grayscale(),
             T.ToTensor(),
             T.ConvertImageDtype(torch.float),

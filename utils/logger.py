@@ -1,10 +1,10 @@
+from config import config
 import sys
 from loguru import logger
 import warnings
 
 
 def setup_logging():
-    warnings.filterwarnings("ignore", category=UserWarning)
     warnings.filterwarnings("ignore", category=FutureWarning)
 
     logger.remove()  # Remove the default handler
@@ -13,7 +13,7 @@ def setup_logging():
         format="<level>{level: <8}</level> | "
                "<cyan>{function}</cyan> | "
                "<level>{message}</level>",
-        level="DEBUG"
+        level=config.log_level,
     )
 
 

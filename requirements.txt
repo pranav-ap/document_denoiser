@@ -13,3 +13,4 @@ scikit-learn
 scikit-image
 opencv-python
 loguru
+hydra-core

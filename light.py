@@ -1,9 +1,12 @@
 from utils import logger
 from config import config
+import os
 import torch
 import torch.nn.functional as F
 import lightning.pytorch as pl
 from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint, TQDMProgressBar, LearningRateMonitor
+from utils import create_three_image_row
+
 
 torch.set_float32_matmul_precision('medium')
 
@@ -20,6 +23,9 @@ class DocumentDenoiserLightning(pl.LightningModule):
         self.learning_rate = config.train.learning_rate
         self.save_hyperparameters(ignore=['model'])
 
+        os.makedirs(config.dirs.test_images, exist_ok=True)
+        os.makedirs(config.dirs.val_images, exist_ok=True)
+
     def forward(self, noisy_images):
         return self.model(noisy_images)
 
@@ -27,35 +33,71 @@ class DocumentDenoiserLightning(pl.LightningModule):
     def compute_loss(restored_images, clean_images):
         return F.mse_loss(restored_images, clean_images)
 
-    def shared_step(self, batch, stage: str):
+    def training_step(self, batch, batch_idx):
         noisy_images, clean_images = batch
         restored_images = self(noisy_images)
+        
         loss = self.compute_loss(restored_images, clean_images)
-        self.log(f"{stage}_loss", loss, prog_bar=True, on_epoch=True, on_step=False)
+        self.log(f"train_loss", loss, prog_bar=True, on_epoch=True, on_step=False)
+        
         return loss
-
-    def training_step(self, batch, batch_idx):
-        return self.shared_step(batch, "train")
 
     @torch.no_grad()
     def validation_step(self, batch, batch_idx):
-        return self.shared_step(batch, "val")
+        noisy_images, clean_images = batch
+        restored_images = self(noisy_images)
+
+        loss = self.compute_loss(restored_images, clean_images)
+        self.log("val_loss", loss, prog_bar=True, on_epoch=True, on_step=False)
+
+        if batch_idx == 0 or batch_idx == 1:
+            for i, (noisy_image, restored_image, clean_image) in enumerate(zip(noisy_images, restored_images, clean_images)):
+                combined_image = create_three_image_row(noisy_image, restored_image, clean_image)
+                save_path = os.path.join(config.dirs.val_images, f"val_image_{batch_idx}_{i}.png")
+                combined_image.save(save_path)
+
+        return loss
 
     @torch.no_grad()
     def test_step(self, batch, batch_idx):
-        return self.shared_step(batch, "test")
+        noisy_images, clean_images = batch
+        restored_images = self(noisy_images)
+
+        loss = self.compute_loss(restored_images, clean_images)
+        self.log("test_loss", loss, prog_bar=True, on_epoch=True, on_step=False)
+
+        if batch_idx == 0 or batch_idx == 1:
+            for i, (noisy_image, restored_image, clean_image) in enumerate(zip(noisy_images, restored_images, clean_images)):
+                combined_image = create_three_image_row(noisy_image, restored_image, clean_image)
+                save_path = os.path.join(config.dirs.test_images, f"test_image_{batch_idx}_{i}.png")
+                combined_image.save(save_path)
+
+        return loss
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
         lr_scheduler = {
             "scheduler": torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=2, factor=0.5),
-            "monitor": "val_loss",
+            "monitor": "train_loss",
             "interval": "epoch",
             "frequency": 1,
         }
 
         return {"optimizer": optimizer, "lr_scheduler": lr_scheduler}
+    
+    # def configure_optimizers(self):
+    #     from torch.optim.lr_scheduler import CosineAnnealingLR
+    #     optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
+        
+    #     lr_scheduler = {
+    #         "scheduler": CosineAnnealingLR(optimizer, T_max=config.train.max_epochs, eta_min=1e-6),  
+    #         "interval": "epoch",
+    #         "frequency": 1,
+    #     }
+        
+    #     return {"optimizer": optimizer, "lr_scheduler": lr_scheduler}
 
+        
     def configure_callbacks(self):
         early_stop_callback = EarlyStopping(
             monitor="val_loss",
@@ -77,11 +119,3 @@ class DocumentDenoiserLightning(pl.LightningModule):
         lr_monitor_callback = LearningRateMonitor(logging_interval='epoch')
 
         return [checkpoint_callback, early_stop_callback, progress_bar_callback, lr_monitor_callback]
-
-    def on_train_epoch_end(self):
-        train_loss = self.trainer.callback_metrics["train_loss"]
-        logger.info(f"Epoch [{self.current_epoch}] Training Loss: {train_loss:.4f}")
-
-    def on_validation_epoch_end(self):
-        val_loss = self.trainer.callback_metrics["val_loss"]
-        logger.info(f"Epoch [{self.current_epoch}] Validation Loss: {val_loss:.4f}")

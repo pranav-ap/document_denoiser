@@ -16,28 +16,29 @@ def main():
 
     model = DocumentDenoiser().to(device)
     lightning_model = DocumentDenoiserLightning(model)
-    data_module = DocumentDataModule()
+    dm = DocumentDataModule()
 
     trainer = pl.Trainer(
-        default_root_dir=config.output_dir,
-        logger=L.pytorch.loggers.CSVLogger(save_dir=config.output_dir),
+        default_root_dir=config.dirs.output,
+        logger=L.pytorch.loggers.CSVLogger(save_dir=config.dirs.output),
         devices='auto',
         accelerator="auto",
         max_epochs=config.train.max_epochs,
         log_every_n_steps=config.train.log_every_n_steps,
         check_val_every_n_epoch=config.train.check_val_every_n_epoch,
         accumulate_grad_batches=config.train.accumulate_grad_batches,
-        enable_model_summary=False,
-        fast_dev_run=True,
         num_sanity_val_steps=config.train.num_sanity_val_steps,
+        enable_model_summary=False,
+        # fast_dev_run=True,
+        # overfit_batches=2,        
     )
-
-    trainer.fit(lightning_model, datamodule=data_module)
+    
+    trainer.fit(lightning_model, datamodule=dm)
 
     if trainer.checkpoint_callback.best_model_path:
         logger.info(f"Best model path : {trainer.checkpoint_callback.best_model_path}")
-    else:
-        logger.warning("No checkpoint found. Training might have been interrupted early.")
+
+    trainer.test(lightning_model, datamodule=dm)
 
 
 if __name__ == '__main__':
