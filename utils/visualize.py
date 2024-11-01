@@ -1,5 +1,6 @@
 import torch
 import torchvision.transforms as T
+from PIL import Image
 
 import matplotlib.pyplot as plt
 plt.style.use('seaborn-v0_8-whitegrid')
@@ -76,4 +77,33 @@ def tensor_to_pil_image(tensor):
 
     # Convert to PIL image
     return T.ToPILImage()(tensor)
+
+
+def create_side_by_side_image(tensor1, tensor2, padding=10):
+    image1 = tensor_to_pil_image(tensor1)
+    image2 = tensor_to_pil_image(tensor2)
+
+    new_width = image1.width + image2.width + padding
+    new_height = max(image1.height, image2.height)
+    side_by_side_image = Image.new('L', (new_width, new_height))
+
+    side_by_side_image.paste(image1, (0, 0))  
+    side_by_side_image.paste(image2, (image1.width + padding, 0))
+
+    return side_by_side_image
+
+def create_three_image_row(tensor1, tensor2, tensor3, padding=10):
+    image1 = tensor_to_pil_image(tensor1)
+    image2 = tensor_to_pil_image(tensor2)
+    image3 = tensor_to_pil_image(tensor3)
+
+    new_width = image1.width + image2.width + image3.width + 2 * padding
+    new_height = max(image1.height, image2.height, image3.height)
+    row_image = Image.new('L', (new_width, new_height))
+
+    row_image.paste(image1, (0, 0))
+    row_image.paste(image2, (image1.width + padding, 0))
+    row_image.paste(image3, (image1.width + image2.width + 2 * padding, 0))
+
+    return row_image
 
