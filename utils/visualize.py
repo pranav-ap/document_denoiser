@@ -1,60 +1,19 @@
 import torch
 import torchvision.transforms as T
-from PIL import Image
+from PIL import Image, ImageOps, ImageDraw
 
 import matplotlib.pyplot as plt
 plt.style.use('seaborn-v0_8-whitegrid')
-import seaborn as sns
-sns.set_theme(style="darkgrid")
 
+to_tensor = T.ToTensor()
+to_pil = T.ToPILImage()
 
-def visualize_X_samples_grid(dataset, labels, n_samples=12, n_cols=4):
-    n_rows = n_samples // n_cols
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(n_cols * 2, n_rows * 2))
-
-    for i, ax in enumerate(axes.flat):
-        label = labels[i]
-        img = dataset[i]
-
-        if isinstance(img, torch.Tensor):  # Check if it's a tensor
-            img = img.detach().numpy()  # Detach from graph if it requires grad
-
-        ax.imshow(img.squeeze(), cmap='gray')
-        ax.set_title(f"Label: {label}")
-        ax.axis('off')
-
-    plt.tight_layout()
-    plt.show()
-
-
-def visualize_images_from_batch(batch, n_rows=5, col_titles=("Noisy", "Clean")):
-    batch_images_1, batch_images_2 = batch
-    batch_size = len(batch_images_1)
-    n_rows = min(n_rows, batch_size)  # Limit n_rows to batch size if needed
-
-    fig, axes = plt.subplots(n_rows, 2, figsize=(9, n_rows * 3))
-
-    for j in range(n_rows):
-        img1 = batch_images_1[j]
-        img2 = batch_images_2[j]
-
-        if isinstance(img1, torch.Tensor):
-            img1 = img1.detach().numpy()
-        if isinstance(img2, torch.Tensor):
-            img2 = img2.detach().numpy()
-
-        # Display Image 1
-        axes[j, 0].imshow(img1.squeeze(), cmap='gray')
-        axes[j, 0].set_title(f"{col_titles[0]} {j}")
-        axes[j, 0].axis('off')
-
-        # Display Image 2
-        axes[j, 1].imshow(img2.squeeze(), cmap='gray')
-        axes[j, 1].set_title(f"{col_titles[1]} {j}")
-        axes[j, 1].axis('off')
-
-    plt.tight_layout()
-    plt.show()
+denormalize = T.Compose([
+    T.Normalize(
+        mean=[-0.485 / 0.229, -0.456 / 0.224, -0.406 / 0.225],
+        std=[1 / 0.229, 1 / 0.224, 1 / 0.225]
+    )
+])
 
 
 def tensor_to_pil_image(tensor):
@@ -85,21 +44,25 @@ def create_side_by_side_image(tensor1, tensor2, padding=10):
 
     new_width = image1.width + image2.width + padding
     new_height = max(image1.height, image2.height)
-    side_by_side_image = Image.new('L', (new_width, new_height))
+    side_by_side_image = Image.new('RGB', (new_width, new_height))
 
     side_by_side_image.paste(image1, (0, 0))  
     side_by_side_image.paste(image2, (image1.width + padding, 0))
 
     return side_by_side_image
 
+
 def create_three_image_row(tensor1, tensor2, tensor3, padding=10):
+    tensor1 = denormalize(tensor1)
     image1 = tensor_to_pil_image(tensor1)
+    tensor2 = denormalize(tensor2)
     image2 = tensor_to_pil_image(tensor2)
+    tensor3 = denormalize(tensor3)
     image3 = tensor_to_pil_image(tensor3)
 
     new_width = image1.width + image2.width + image3.width + 2 * padding
     new_height = max(image1.height, image2.height, image3.height)
-    row_image = Image.new('L', (new_width, new_height))
+    row_image = Image.new('RGB', (new_width, new_height))
 
     row_image.paste(image1, (0, 0))
     row_image.paste(image2, (image1.width + padding, 0))
@@ -107,3 +70,20 @@ def create_three_image_row(tensor1, tensor2, tensor3, padding=10):
 
     return row_image
 
+
+def create_image_column(rows, padding=10):
+    column_width = max(row.width for row in rows)
+    column_height = sum(row.height for row in rows) + padding * (len(rows) - 1)
+    column_image = Image.new('RGB', (column_width, column_height))
+
+    y_offset = 0
+
+    for row in rows:
+        column_image.paste(row, (0, y_offset))
+        y_offset += row.height + padding
+
+    return column_image
+
+
+def get_tensor_grid(pil_image):
+    return to_tensor(pil_image).unsqueeze(0)

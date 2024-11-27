@@ -1,3 +1,3 @@
 from .common import *
 from .visualize import *
-from .logger import logger
+from .logger import logger, MyLogger

@@ -1,24 +1,54 @@
 log_level: WARNING  # TRACE WARNING
 
-image_size: [250, 340]  # [420, 540]
+task:
+    eda_mode: False  # True False
 
-dirs:
-    data: /home/stud/ath/ath_ws/others/data
-    output: /home/stud/ath/ath_ws/others/document_denoiser/output
-    test_images: ${dirs.output}/test_images
-    val_images: ${dirs.output}/val_images
+experiment:
+    model: unet  # resnet
+    name: ${experiment.model}
+
+paths:
+    roots:
+        ws: D:/code # /home/stud/ath/ath_ws/others  D:/code
+        project: ${paths.roots.ws}/document_denoiser
+        output: ${paths.roots.project}/output
+        data: ${paths.roots.project}/data
+
+    output:
+        logs: ${paths.roots.output}/${experiment.name}/logs
+        checkpoints: ${paths.roots.output}/${experiment.name}/checkpoints
+        train_images: ${paths.roots.output}/${experiment.name}/images/train
+        val_images: ${paths.roots.output}/${experiment.name}/images/val
+        test_images: ${paths.roots.output}/${experiment.name}/images/test
+
+image:
+    image_shape: [128, 128]
 
 train:
     train_batch_size: 4
     val_batch_size: 4
 
-    max_epochs: 100
-    check_val_every_n_epoch: 10
+    fast_dev_run: True  # True False
+    overfit_batches: 1
+
+    patience: 5
+    max_epochs: 10
+    check_val_every_n_epoch: 2
     num_sanity_val_steps: 1
-    log_every_n_steps: 25
-    accumulate_grad_batches: 2
+    log_every_n_steps: 1
+    accumulate_grad_batches: 1
     learning_rate: 1e-4
+
+val:
+    num_patch_pairs_to_save: 6
 
 test:
     batch_size: 4
+
+loggers:
+     - tensorboard
+#    - neptune
+
+
+
 
