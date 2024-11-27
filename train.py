@@ -14,7 +14,7 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     logger.info(f"Using device: {device}")
 
-    model = DocumentDenoiser().to(device)
+    model = DocumentDenoiser()
     lightning_model = DocumentDenoiserLightning(model)
     dm = DocumentDataModule()
 
