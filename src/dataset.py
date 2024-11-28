@@ -22,8 +22,8 @@ class DenoiserDataset(torch.utils.data.Dataset):
         self.augmentation = augmentation
 
         root_dir = config.paths.roots.data
-        self.shabby_dir: str = os.path.join(root_dir, subset, f'{subset}_shabby')
-        self.clean_dir: str = os.path.join(root_dir, subset, f'{subset}_cleaned')
+        self.shabby_dir: str = os.path.join(root_dir, subset, subset, f'{subset}_shabby')
+        self.clean_dir: str = os.path.join(root_dir, subset, subset, f'{subset}_cleaned')
 
         self.shabby_images = sorted(os.listdir(self.shabby_dir))
         self.clean_images = sorted(os.listdir(self.clean_dir))

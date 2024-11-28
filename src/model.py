@@ -61,16 +61,19 @@ class UNet(nn.Module):
                 (in_channels, 64),
                 (64, 128),
                 (128, 256),
-                (256, 512)
+                (256, 512),
+                (512, 1024),
+                (1024, 2048),
             ]
         ])
 
-        self.down_sample = nn.ModuleList([DownSample() for _ in range(4)])
+        self.down_sample = nn.ModuleList([DownSample() for _ in range(5)])
 
-        self.middle_conv = DoubleConvolution(512, 1024)
+        self.middle_conv = DoubleConvolution(1024, 2048)
 
         self.up_sample = nn.ModuleList([
             UpSample(i, o) for i, o in [
+                (2048, 1024),
                 (1024, 512),
                 (512, 256),
                 (256, 128),
@@ -80,6 +83,7 @@ class UNet(nn.Module):
 
         self.up_conv = nn.ModuleList([
             DoubleConvolution(i, o) for i, o in [
+                (2048, 1024),
                 (1024, 512),
                 (512, 256),
                 (256, 128),
@@ -87,20 +91,20 @@ class UNet(nn.Module):
             ]
         ])
 
-        self.crop_and_concat = nn.ModuleList([CropAndConcat() for _ in range(4)])
+        self.crop_and_concat = nn.ModuleList([CropAndConcat() for _ in range(5)])
         self.final_conv = nn.Conv2d(64, out_channels, kernel_size=1)
 
     def forward(self, x: torch.Tensor):
         pass_through = []
 
-        for i in range(4):
+        for i in range(5):
             x = self.down_conv[i](x)
             pass_through.append(x)
             x = self.down_sample[i](x)
 
         x = self.middle_conv(x)
 
-        for i in range(4):
+        for i in range(5):
             x = self.up_sample[i](x)
             x = self.crop_and_concat[i](x, pass_through.pop())
             x = self.up_conv[i](x)

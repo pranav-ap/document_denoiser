@@ -48,7 +48,7 @@ class Light(pl.LightningModule):
         self.log(f"train/loss", loss, prog_bar=True, on_epoch=True, on_step=False)
 
         if batch_idx == 0:
-            limit_count = config.val.num_patch_pairs_to_save
+            limit_count = config.val.save_count
             self._log_images(
                 noisy_images, restored_images, clean_images,
                 limit_count=limit_count,
@@ -66,7 +66,7 @@ class Light(pl.LightningModule):
         self.log("val/loss", loss, prog_bar=True, on_epoch=True, on_step=False)
 
         if batch_idx == 0:
-            limit_count = config.val.num_patch_pairs_to_save
+            limit_count = config.val.save_count
             self._log_images(
                 noisy_images, restored_images, clean_images,
                 limit_count=limit_count,
@@ -84,7 +84,7 @@ class Light(pl.LightningModule):
         self.log("test/loss", loss, prog_bar=True, on_epoch=True, on_step=False)
 
         if batch_idx == 0:
-            limit_count = config.val.num_patch_pairs_to_save
+            limit_count = config.val.save_count
             self._log_images(
                 noisy_images, restored_images, clean_images,
                 limit_count=limit_count,
@@ -112,7 +112,7 @@ class Light(pl.LightningModule):
         elif stage == 'validate':
             out_path = config.paths.output.val_images
 
-        name = f'{stage}_current_epoch_{self.current_epoch}.png'
+        name = f'{stage}_epoch_{self.current_epoch}.png'
         out_path = os.path.join(out_path, name)
 
         final.save(out_path)
