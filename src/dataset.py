@@ -63,8 +63,8 @@ class DenoiserDataModule(L.LightningDataModule):
 
         self.augmentation = A.Compose(
             transforms=[
-                A.Defocus(p=0.3, radius=1),
-                A.GaussNoise(p=0.3, var_limit=(10.0, 40.0)),
+                A.Defocus(p=0.5, radius=1),
+                A.GaussNoise(p=0.5, var_limit=(10.0, 60.0)),
             ]
         )
 
@@ -85,7 +85,7 @@ class DenoiserDataModule(L.LightningDataModule):
         if stage == "fit":
             self.dataset['train'] = DenoiserDataset(
                 subset="train",
-                augmentation=self.augmentation,
+                # augmentation=self.augmentation,
                 transform=self.transform
             )
 
