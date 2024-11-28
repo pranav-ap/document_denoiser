@@ -12,8 +12,8 @@ The loss function used is the Mean Squared Error and the optimizer is Adam.
 
 Some results from the model are shown below.
 
-![Samples 1](assets/samples 1.png)
+![Samples 1](assets/samples_1.png)
 
-![Samples 2](assets/samples 2.png)
+![Samples 2](assets/samples_2.png)
 
-![Samples 3](assets/samples 3.png)
+![Samples 3](assets/samples_3.png)
