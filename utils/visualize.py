@@ -17,24 +17,20 @@ denormalize = T.Compose([
 
 
 def tensor_to_pil_image(tensor):
-    tensor = tensor.clone().detach()  # Detach and clone to create a safe copy
+    tensor = tensor.clone().detach()
 
-    # If the tensor is 4D (batch), remove the batch dimension
     if tensor.ndim == 4:
         tensor = tensor.squeeze(0)
 
-    # Convert the tensor to a format PIL can handle
-    if tensor.ndim == 3 and tensor.shape[0] == 1:  # Grayscale image
-        tensor = tensor.squeeze(0)  # Remove channel dimension for grayscale
+    if tensor.ndim == 3 and tensor.shape[0] == 1:
+        tensor = tensor.squeeze(0)
 
-    # Scale the values to [0, 255] for uint8 images
-    tensor = tensor.clone().detach()  # Detach from computation graph
-    if tensor.min() < 0 or tensor.max() > 1:  # Normalize to [0, 1] if needed
+    tensor = tensor.clone().detach()
+    if tensor.min() < 0 or tensor.max() > 1:
         tensor = (tensor - tensor.min()) / (tensor.max() - tensor.min())
 
-    tensor = (tensor * 255).byte()  # Convert to uint8
+    tensor = (tensor * 255).byte()
 
-    # Convert to PIL image
     return T.ToPILImage()(tensor)
 
 
