@@ -1,4 +1,8 @@
-./data/
+output/
+data/
+.neptune
+nohup.out
+kaggle.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
